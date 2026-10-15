@@ -24,7 +24,8 @@
     "test/**/*.ts",
     "vite.config.ts",
     "oxlint.config.ts",
-    "oxfmt.config.ts"
+    "oxfmt.config.ts",
+    "taze.config.ts"
   ],
   "exclude": ["node_modules", "dist", ".alchemy", "tools"]
 }

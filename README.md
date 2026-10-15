@@ -62,6 +62,16 @@ bun run test       # vp test: Vitest 5
 
 `alchemy dev` runs the Worker locally (including a local email simulator).
 
+## Keeping dependencies fresh
+
+[Taze](https://github.com/antfu-collective/taze) keeps deps up to date (`taze.config.ts`, recursive `-r` so it keeps working if this grows into a multi-package monorepo):
+
+```sh
+bun run deps:check        # safe-range check, includes exact-pinned deps
+bun run deps:check:major  # preview all updates including majors
+bun run deps:update        # write majors + reinstall (`taze major -r -w -i`)
+```
+
 ## Changing the config
 
 - Every `MAIL_*` value is bound onto the Worker (as a secret env binding, per Alchemy's `Config` semantics) and re-read at runtime, so editing `.env` and re-deploying updates behavior without code changes. Malformed values (e.g. a bad address in `MAIL_FORWARD_TO`, or an unknown `MAIL_MATCH_MODE`) fail the deploy instead of being silently ignored.
