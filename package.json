@@ -1,0 +1,33 @@
+{
+  "name": "mail-router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev",
+    "deploy": "alchemy deploy",
+    "destroy": "alchemy destroy",
+    "logs": "alchemy logs",
+    "tail": "alchemy logs --tail",
+    "test": "vp test",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "typecheck": "vp check --no-fmt --no-lint"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "^4.0.5",
+    "@effect/platform-node": "^4.0.5",
+    "alchemy": "^2.0.0-beta.83",
+    "effect": "^4.0.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261012.1",
+    "@types/bun": "^1.4.3",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=24.11.1"
+  },
+  "packageManager": "bun@1.4.2"
+}
