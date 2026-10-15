@@ -22,8 +22,12 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261012.1",
+    "@oxlint/plugins": "1.88.0",
     "@types/bun": "^1.4.3",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
     "typescript": "^7.0.2",
+    "ultracite": "8.0.1",
     "vite-plus": "^1.2.0"
   },
   "engines": {
