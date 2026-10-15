@@ -4,6 +4,7 @@ import { HttpServerRequest } from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import { ForwardTo, Matchers, Zone } from "./config.ts";
 import { forwardToAll } from "./forward.ts";
+import { isHealthCheck } from "./health.ts";
 
 /**
  * Cloudflare Email Routing Worker.
@@ -22,9 +23,8 @@ import { forwardToAll } from "./forward.ts";
  * message is forwarded to every address in `MAIL_FORWARD_TO` (see
  * `src/forward.ts` for the fan-out/retry semantics).
  *
-  * **HTTP** — `GET /` and `GET /healthz` return a minimal liveness check
-  * (`{ ok: true }`). They intentionally expose no routing config, addresses,
-  * or other internals.
+ * **HTTP** — `GET /healthz` returns a minimal liveness check (`{ ok: true }`).
+ * It intentionally exposes no routing config, addresses, or other internals.
  */
 export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
   "EmailRouter",
@@ -36,6 +36,10 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
 
     yield* Cloudflare.email({ zone, matchers }).subscribe((message) =>
       Effect.gen(function* () {
+        // Defense-in-depth: construction already guarantees a non-empty
+        // `forwardTo`, so this only fires if the runtime bindings were
+        // tampered with after deploy. Reject explicitly rather than accept
+        // (and silently drop) the message.
         if (forwardTo.length === 0) {
           yield* Effect.logError(
             `mail-router: no forward targets configured; rejecting message to "${message.to}"`,
@@ -59,7 +63,7 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
         const request = yield* HttpServerRequest;
         const url = new URL(request.url, "http://internal");
 
-        if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/healthz")) {
+        if (isHealthCheck(request.method, url.pathname)) {
           return yield* HttpServerResponse.json({
             ok: true,
           });
@@ -69,4 +73,4 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
       }),
     };
   }).pipe(Effect.provide(Cloudflare.EmailEventSourceLive)),
-) { }
+) {}
