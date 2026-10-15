@@ -44,7 +44,7 @@ bunx alchemy profile edit --add Cloudflare   # OAuth or an API token
 bun run deploy                               # alchemy deploy
 ```
 
-Other scripts: `bun run dev` (`alchemy dev`, local workerd), `bun run destroy`, `bun run logs`, `bun run tail`.
+Other scripts: `bun run dev` (`alchemy dev`, local workerd). Everything else goes straight through Alchemy: `bunx alchemy destroy`, `bunx alchemy logs`, `bunx alchemy logs --tail`, etc.
 
 Each deploy targets the single zone in `MAIL_ZONE`. For additional zones, deploy again with a different `MAIL_ZONE` — one worker per zone.
 
@@ -67,9 +67,7 @@ bun run test       # vp test: Vitest 5
 [Taze](https://github.com/antfu-collective/taze) keeps deps up to date (`taze.config.ts`, recursive `-r` so it keeps working if this grows into a multi-package monorepo):
 
 ```sh
-bun run deps:check        # safe-range check, includes exact-pinned deps
-bun run deps:check:major  # preview all updates including majors
-bun run deps:update        # write majors + reinstall (`taze major -r -w -i`)
+bun run update  # interactive picker: select updates, then writes + reinstalls
 ```
 
 ## Changing the config

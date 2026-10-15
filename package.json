@@ -6,16 +6,11 @@
   "scripts": {
     "dev": "alchemy dev",
     "deploy": "alchemy deploy",
-    "destroy": "alchemy destroy",
-    "logs": "alchemy logs",
-    "tail": "alchemy logs --tail",
     "test": "vp test",
     "check": "vp check",
     "check:fix": "vp check --fix",
     "typecheck": "vp check --no-fmt --no-lint",
-    "deps:check": "taze -r",
-    "deps:check:major": "taze major -r",
-    "deps:update": "taze major -r -w -i"
+    "update": "taze major -r -I -w -i"
   },
   "dependencies": {
     "@effect/platform-bun": "^4.0.5",
