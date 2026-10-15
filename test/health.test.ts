@@ -1,19 +1,21 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { isHealthCheck } from "../src/health.ts";
 
-describe("isHealthCheck", () => {
+describe(isHealthCheck, () => {
   it("matches only GET /healthz", () => {
-    expect(isHealthCheck("GET", "/healthz")).toBe(true);
+    expect(isHealthCheck("GET", "/healthz")).toBeTruthy();
 
-    const rejected: Array<[string, string]> = [
+    const rejected: [string, string][] = [
       ["GET", "/"],
       ["POST", "/healthz"],
       ["HEAD", "/healthz"],
       ["GET", "/healthz/extra"],
       ["GET", "/readyz"],
     ];
+
     for (const [method, pathname] of rejected) {
-      expect(isHealthCheck(method, pathname)).toBe(false);
+      expect(isHealthCheck(method, pathname)).toBeFalsy();
     }
   });
 });

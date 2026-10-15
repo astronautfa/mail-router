@@ -2,6 +2,7 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
+
 import { ForwardTo, Matchers, Zone } from "./config.ts";
 import { forwardToAll } from "./forward.ts";
 import { isHealthCheck } from "./health.ts";
@@ -29,22 +30,25 @@ import { isHealthCheck } from "./health.ts";
 export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
   "EmailRouter",
   { main: import.meta.url },
-  Effect.gen(function* () {
+  Effect.gen(function* construction() {
     const zone = yield* Zone;
     const forwardTo = yield* ForwardTo;
     const matchers = yield* Matchers;
 
-    yield* Cloudflare.email({ zone, matchers }).subscribe((message) =>
-      Effect.gen(function* () {
+    yield* Cloudflare.email({ matchers, zone }).subscribe((message) =>
+      Effect.gen(function* handleMessage() {
         // Defense-in-depth: construction already guarantees a non-empty
         // `forwardTo`, so this only fires if the runtime bindings were
         // tampered with after deploy. Reject explicitly rather than accept
         // (and silently drop) the message.
         if (forwardTo.length === 0) {
           yield* Effect.logError(
-            `mail-router: no forward targets configured; rejecting message to "${message.to}"`,
+            `mail-router: no forward targets configured; rejecting message to "${message.to}"`
           );
-          yield* message.setReject("mail-router is not configured with any forward targets");
+          yield* message.setReject(
+            "mail-router is not configured with any forward targets"
+          );
+
           return;
         }
 
@@ -52,14 +56,14 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
 
         if (outcome.failed.length > 0) {
           yield* Effect.logWarning(
-            `mail-router: ${outcome.failed.length}/${forwardTo.length} forward(s) failed for "${message.to}"`,
+            `mail-router: ${outcome.failed.length}/${forwardTo.length} forward(s) failed for "${message.to}"`
           );
         }
-      }),
+      })
     );
 
     return {
-      fetch: Effect.gen(function* () {
+      fetch: Effect.gen(function* fetch() {
         const request = yield* HttpServerRequest;
         const url = new URL(request.url, "http://internal");
 
@@ -72,5 +76,5 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
         return HttpServerResponse.text("Not found", { status: 404 });
       }),
     };
-  }).pipe(Effect.provide(Cloudflare.EmailEventSourceLive)),
+  }).pipe(Effect.provide(Cloudflare.EmailEventSourceLive))
 ) {}

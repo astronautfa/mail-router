@@ -4,12 +4,12 @@ import * as Effect from "effect/Effect";
 
 export interface ForwardOutcome {
   /** Destinations the message was delivered to. */
-  readonly forwarded: ReadonlyArray<string>;
+  readonly forwarded: readonly string[];
   /** Destinations that rejected the forward, with the underlying error. */
-  readonly failed: ReadonlyArray<{
+  readonly failed: readonly {
     readonly target: string;
     readonly error: Cloudflare.EmailError;
-  }>;
+  }[];
 }
 
 /**
@@ -26,24 +26,29 @@ export interface ForwardOutcome {
  *   sending server retries later.
  */
 export const forwardToAll = (
-  message: Cloudflare.ForwardableEmailMessage,
-  targets: ReadonlyArray<string>,
+  message: Pick<Cloudflare.ForwardableEmailMessage, "forward">,
+  targets: readonly string[]
 ): Effect.Effect<ForwardOutcome, Cloudflare.EmailError> =>
-  Effect.gen(function* () {
+  Effect.gen(function* fanOut() {
     const [forwarded, failed] = yield* Effect.partition(
       targets,
       (target) =>
         message.forward(target).pipe(
-          Effect.tap(() => Effect.logInfo(`mail-router: forwarded to ${target}`)),
+          Effect.tap(() =>
+            Effect.logInfo(`mail-router: forwarded to ${target}`)
+          ),
           Effect.as(target),
-          Effect.mapError((error) => ({ target, error })),
+          Effect.mapError((error) => ({ error, target }))
         ),
-      { concurrency: "unbounded" },
+      { concurrency: "unbounded" }
     );
 
-    if (Array.isReadonlyArrayNonEmpty(failed) && Array.isReadonlyArrayEmpty(forwarded)) {
+    if (
+      Array.isReadonlyArrayNonEmpty(failed) &&
+      Array.isReadonlyArrayEmpty(forwarded)
+    ) {
       return yield* Effect.fail(Array.headNonEmpty(failed).error);
     }
 
-    return { forwarded, failed };
+    return { failed, forwarded };
   });

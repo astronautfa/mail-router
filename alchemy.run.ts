@@ -1,7 +1,8 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
-import EmailRouter from "./src/EmailRouter.ts";
+
+import EmailRouter from "./src/email-router.ts";
 
 export default Alchemy.Stack(
   "MailRouter",
@@ -9,11 +10,11 @@ export default Alchemy.Stack(
     providers: Cloudflare.providers(),
     state: Cloudflare.state(),
   },
-  Effect.gen(function* () {
+  Effect.gen(function* stack() {
     const router = yield* EmailRouter;
 
     return {
       url: router.url.as<string>(),
     };
-  }),
+  })
 );
