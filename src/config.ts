@@ -4,10 +4,10 @@ import * as ConfigProvider from "effect/ConfigProvider";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-export const DEFAULT_ZONE = "example.com";
-export const DEFAULT_MATCH_MODE = "catch-all";
-
-/** A structural copy of `Cloudflare.Email.Matcher` (`alchemy/Cloudflare`). */
+/**
+ * Mirrors `Matcher` from `alchemy/Cloudflare` (`Email/Rule.ts`). Kept local
+ * so config parsing stays free of deploy-tooling imports.
+ */
 export type EmailMatcher = { type: "all" } | { type: "literal"; field: "to"; value: string };
 
 const EmailAddress = Schema.String.pipe(
@@ -39,21 +39,44 @@ const addressList = (name: string): Config.Config<ReadonlyArray<string>> =>
     }),
   );
 
-/** `MAIL_ZONE` — the zone that hosts the Email Routing rules. */
+/**
+ * `MAIL_ZONE` — the zone that hosts the Email Routing rules. Required with no
+ * default, so a missing value fails the deploy instead of silently targeting
+ * `example.com`. Blank values fail too: an empty zone would only surface later
+ * as a zone-lookup failure at runtime.
+ */
 export const Zone: Config.Config<string> = Config.String("MAIL_ZONE").pipe(
-  Config.withDefault(DEFAULT_ZONE),
+  Config.flatMap((zone) =>
+    zone.trim().length === 0
+      ? failConfig("MAIL_ZONE: zone must not be blank")
+      : Config.succeed(zone),
+  ),
 );
 
-/** `MAIL_MATCH_MODE` — `"catch-all"` or `"literal"`. */
+/** `MAIL_MATCH_MODE` — `"catch-all"` or `"literal"`, validated at the source so a typo fails fast. */
 export const MatchMode: Config.Config<string> = Config.String("MAIL_MATCH_MODE").pipe(
-  Config.withDefault(DEFAULT_MATCH_MODE),
+  Config.withDefault("catch-all"),
+  Config.flatMap((mode) =>
+    mode === "catch-all" || mode === "literal"
+      ? Config.succeed(mode)
+      : failConfig(`MAIL_MATCH_MODE: expected "catch-all" or "literal"; got "${mode}"`),
+  ),
 );
 
 /** `MAIL_INBOUND` — comma-separated recipients matched in `literal` mode. */
 export const Inbound: Config.Config<ReadonlyArray<string>> = addressList("MAIL_INBOUND");
 
-/** `MAIL_FORWARD_TO` — comma-separated destinations every message is forwarded to. */
-export const ForwardTo: Config.Config<ReadonlyArray<string>> = addressList("MAIL_FORWARD_TO");
+/**
+ * `MAIL_FORWARD_TO` — comma-separated destinations every message is forwarded
+ * to. At least one is required: an empty list would reject all mail at runtime.
+ */
+export const ForwardTo: Config.Config<ReadonlyArray<string>> = addressList("MAIL_FORWARD_TO").pipe(
+  Config.flatMap((addresses) =>
+    Array.isReadonlyArrayEmpty(addresses)
+      ? failConfig("MAIL_FORWARD_TO: at least one forward destination is required")
+      : Config.succeed(addresses),
+  ),
+);
 
 /**
  * The Email Routing matchers to create, derived from `MatchMode` + `Inbound`.
@@ -65,15 +88,13 @@ export const Matchers: Config.Config<Array<EmailMatcher> | undefined> = Config.a
 }).pipe(
   Config.flatMap(({ matchMode, inbound }) => {
     if (matchMode === "catch-all") return Config.succeed(undefined);
-    if (matchMode !== "literal") {
-      return failConfig(`MAIL_MATCH_MODE: expected "catch-all" or "literal"; got "${matchMode}"`);
+    if (Array.isReadonlyArrayEmpty(inbound)) {
+      return failConfig(
+        "MAIL_INBOUND: at least one address is required when MAIL_MATCH_MODE=literal",
+      );
     }
     return Config.succeed(
-      Array.match(inbound, {
-        onEmpty: () => undefined,
-        onNonEmpty: (addresses) =>
-          Array.map(addresses, (value): EmailMatcher => ({ type: "literal", field: "to", value })),
-      }),
+      Array.map(inbound, (value): EmailMatcher => ({ type: "literal", field: "to", value })),
     );
   }),
 );
