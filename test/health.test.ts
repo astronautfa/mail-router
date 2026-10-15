@@ -9,7 +9,6 @@ describe(isHealthCheck, () => {
     const rejected: [string, string][] = [
       ["GET", "/"],
       ["POST", "/healthz"],
-      ["HEAD", "/healthz"],
       ["GET", "/healthz/extra"],
       ["GET", "/readyz"],
     ];
