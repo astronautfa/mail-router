@@ -13,6 +13,7 @@
     "update": "taze major -r -I -w -i"
   },
   "dependencies": {
+    "@alchemy.run/cloudflare": "^2.0.0-beta.84",
     "@effect/platform-bun": "^4.0.7",
     "@effect/platform-node": "^4.0.7",
     "alchemy": "^2.0.0-beta.84",
