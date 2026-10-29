@@ -1,4 +1,4 @@
-import type * as Cloudflare from "alchemy/Cloudflare";
+import type * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 

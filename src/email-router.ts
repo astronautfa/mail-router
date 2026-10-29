@@ -2,7 +2,6 @@ import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
-
 import { ForwardTo, Matchers, Zone } from "./config.ts";
 import { forwardToAll } from "./forward.ts";
 import { isHealthCheck } from "./health.ts";
