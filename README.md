@@ -11,7 +11,8 @@ Built with [Alchemy](https://alchemy.run) (deploy) and [Effect](https://effect.w
 - `alchemy.run.ts` — the stack. Deploys the Worker and exposes its URL.
 - `src/config.ts` — the `Config` recipes. Address lists are split with `effect/Array`, blanks dropped, and each entry checked against a `Schema` email pattern; a bad value fails the deploy with a `ConfigError` naming the offending entries.
 - `src/forward.ts` — the fan-out: `Effect.partition` forwards one message to every target concurrently and decides when to accept vs. fail for Cloudflare's retry model.
-- `src/email-router.ts` — the Worker itself. Reads config with `effect/Config` in the Construction phase, subscribes to inbound mail with `Cloudflare.email({ zone, matchers })`, and exposes `GET /healthz` over Effect's HTTP API.
+- `src/health.ts` / `src/api.ts` — the HTTP surface, declared with Effect's `HttpApi`. `health.ts` defines the `GET /healthz` endpoint group; `api.ts` assembles `MailRouterApi` and its handlers into a router layer. Method/path matching and 404s come from the HttpApi router.
+- `src/email-router.ts` — the Worker itself. Reads config with `effect/Config` in the Construction phase, subscribes to inbound mail with `Cloudflare.email({ zone, matchers })`, and serves `MailRouterApi` as its `fetch` handler.
 
 Config is read with `effect/Config` in the Worker's Construction phase: Alchemy reads each value from the deploy environment (Bun loads `.env`), binds it to the Worker, and re-resolves it from that binding at runtime. There is no `process.env` plumbing, binding map, or deploy/runtime drift to maintain.
 

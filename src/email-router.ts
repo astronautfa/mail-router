@@ -1,10 +1,12 @@
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as Http from "alchemy/Http";
 import * as Effect from "effect/Effect";
-import { HttpServerRequest } from "effect/http/HttpServerRequest";
-import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as Layer from "effect/Layer";
+
+import { ApiLive } from "./api.ts";
 import { ForwardTo, Matchers, Zone } from "./config.ts";
 import { forwardToAll } from "./forward.ts";
-import { isHealthCheck } from "./health.ts";
 
 /**
  * Cloudflare Email Routing Worker.
@@ -23,8 +25,9 @@ import { isHealthCheck } from "./health.ts";
  * message is forwarded to every address in `MAIL_FORWARD_TO` (see
  * `src/forward.ts` for the fan-out/retry semantics).
  *
- * **HTTP** — `GET /healthz` returns a minimal liveness check (`{ ok: true }`).
- * It intentionally exposes no routing config, addresses, or other internals.
+ * **HTTP** — served by Effect's `HttpApi` (`src/api.ts`). `GET /healthz`
+ * returns a minimal liveness check (`{ ok: true }`); unmatched routes get the
+ * router's 404.
  */
 export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
   "EmailRouter",
@@ -62,18 +65,9 @@ export default class EmailRouter extends Cloudflare.Worker<EmailRouter>()(
     );
 
     return {
-      fetch: Effect.gen(function* fetch() {
-        const request = yield* HttpServerRequest;
-        const url = new URL(request.url, "http://internal");
-
-        if (isHealthCheck(request.method, url.pathname)) {
-          return yield* HttpServerResponse.json({
-            ok: true,
-          });
-        }
-
-        return HttpServerResponse.text("Not found", { status: 404 });
-      }),
+      fetch: yield* HttpRouter.toHttpEffect(
+        ApiLive.pipe(Layer.provide(Http.Platform))
+      ),
     };
   }).pipe(Effect.provide(Cloudflare.EmailEventSourceLive))
 ) {}
