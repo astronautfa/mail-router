@@ -13,22 +13,22 @@
     "update": "taze major -r -I -w -i"
   },
   "dependencies": {
-    "@alchemy.run/cloudflare": "^2.0.0-beta.85",
-    "@effect/platform-bun": "^4.1.2",
-    "@effect/platform-node": "^4.1.2",
-    "alchemy": "^2.0.0-beta.85",
-    "effect": "^4.1.2"
+    "@alchemy.run/cloudflare": "^2.0.0-beta.87",
+    "@effect/platform-bun": "^4.1.4",
+    "@effect/platform-node": "^4.1.4",
+    "alchemy": "^2.0.0-beta.87",
+    "effect": "^4.1.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261107.1",
-    "@oxlint/plugins": "1.92.0",
+    "@cloudflare/workers-types": "5.20261114.1",
+    "@oxlint/plugins": "1.93.0",
     "@types/bun": "^1.4.4",
-    "oxfmt": "0.77.0",
-    "oxlint": "1.92.0",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
     "taze": "^21.3.0",
     "typescript": "^7.0.2",
-    "ultracite": "8.1.1",
-    "vite-plus": "^1.5.0"
+    "ultracite": "8.2.0",
+    "vite-plus": "^1.6.0"
   },
   "engines": {
     "node": ">=24.11.1"
